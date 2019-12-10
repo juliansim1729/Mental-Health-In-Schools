@@ -1,0 +1,60 @@
+---
+title: "Mental Health and its Impact on Bullying in Schools"
+output: html_notebook
+---
+
+
+## Initial Setup
+```{r}
+rm(list = ls())
+```
+
+### Libraries
+```{r}
+library("sas7bdat")
+library("tidyverse")
+library("ggplot2")
+```
+
+### Functions
+```{r}
+convertBoolean <- function(x) {
+  return(x==1)
+}
+```
+
+### Datasets
+```{r}
+schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\2018109\\07_FINAL PU DATA_February 5, 2018\\pu_ssocs16.sas7bdat")
+```
+
+## Data Wrangling and Cleaning
+```{r}
+#selecting and cleaning up the chosen variables
+schooldata <-
+  schooldataraw %>%
+  select(C0174, C0662, C0664, C0666, C0668, C0670, C0672, C0674, C0676, C0678, C0670, C0672, C0674, C0676, C0678, C0680, C0682, C0684, C0686, C0265, C0267, C0273, C0376) %>%
+  transmute(id = row_number(), antiBullying = C0174,
+         assessmentAvailable = 6 - (C0662 + C0664 + C0666),
+         treatmentAvailable = 6 - (C0668 + C0670 + C0672),
+         limitMHProfAccess = C0674, limitFunding = C0676, limitLegal = C0678, limitParental = C0680, 
+         limitComm = C0682, limitPaymentPol = C0684, limitStigma = C0686,
+         discPolCyber = C0265, discBullying = C0267, recogBullying = C0273,
+         bullyingRate = C0376)
+```
+
+```{r}
+booleanRows = c(1, 11, 12, 13)
+
+boolSchoolData <-
+  lapply(schooldata[,booleanRows], convertBoolean)
+
+schooldata[ , 1  ]  <- boolSchoolData[1]
+schooldata[ , 11 ] <- boolSchoolData[2]
+schooldata[ , 12 ] <- boolSchoolData[3]
+schooldata[ , 13 ] <- boolSchoolData[4]
+```
+
+## Codebook
+| ID | The ID number of the School, given for purposes of the study |
+| antiBullying | A boolean describing whether a school has anti-bullying programs put into place. | 
