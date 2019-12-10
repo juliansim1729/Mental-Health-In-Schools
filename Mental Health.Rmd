@@ -35,26 +35,45 @@ schooldata <-
   schooldataraw %>%
   select(C0174, C0662, C0664, C0666, C0668, C0670, C0672, C0674, C0676, C0678, C0670, C0672, C0674, C0676, C0678, C0680, C0682, C0684, C0686, C0265, C0267, C0273, C0376) %>%
   transmute(id = row_number(), antiBullying = C0174,
-         assessmentAvailable = 6 - (C0662 + C0664 + C0666),
-         treatmentAvailable = 6 - (C0668 + C0670 + C0672),
+         assessAva = 6 - (C0662 + C0664 + C0666),
+         treatAva = 6 - (C0668 + C0670 + C0672),
          limitMHProfAccess = C0674, limitFunding = C0676, limitLegal = C0678, limitParental = C0680, 
          limitComm = C0682, limitPaymentPol = C0684, limitStigma = C0686,
-         discPolCyber = C0265, discBullying = C0267, recogBullying = C0273,
+         discCyber = C0265, discBullying = C0267, recogBullying = C0273,
          bullyingRate = C0376)
 ```
 
 ```{r}
-booleanRows = c(1, 11, 12, 13)
+booleanRows = c(1, 11, 12, 13, 14)
 
 boolSchoolData <-
   lapply(schooldata[,booleanRows], convertBoolean)
 
-schooldata[ , 1  ]  <- boolSchoolData[1]
+schooldata[ , 1  ] <- boolSchoolData[1]
 schooldata[ , 11 ] <- boolSchoolData[2]
 schooldata[ , 12 ] <- boolSchoolData[3]
 schooldata[ , 13 ] <- boolSchoolData[4]
+schooldata[ , 14 ] <- boolSchoolData[5]
 ```
 
 ## Codebook
 | ID | The ID number of the School, given for purposes of the study |
-| antiBullying | A boolean describing whether a school has anti-bullying programs put into place. | 
+| antiBullying | A boolean describing whether a school has anti-bullying programs put into place. |
+| assessAva | An aggregate describing whether a school has mental health services for diagnostic assessment available, with a score of 3 being the highest. |
+| treatAva | An aggregate describing whether a school has mental health services for treatment available, with a score of 3 being the highest. |
+| limitMHProfAccess | A score describing whether inadequate access to mental health professionals was a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| limitFunding | A score describing whether inadequate funding was a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| limitLegal | A score describing whether potential legal issues, such as malpractice, or insufficient supervision were a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| limitParental | A score describing whether lack of parental support was a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| limitComm | A score describing whether lack of community support was a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| limitPaymentPol | A score describing whether payment polcies were a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| limitStigma | A score describing whether concern for potential stigmatization of the student was a limiting factor in the school's efforts to provide mental health services to its students, with 1 being major limitations, and 3 being no limitations. |
+| discCyber | A boolean describing whether school staff were trained in discipline policies and practices related to cyberbullying. |
+| discBullying | A boolean describing whether school staff were trained in discipline policies and practices related to bullying. |
+| recogBullying | A boolean describing whether school staff were trained in recognizing bullying. |
+| bullyingRate | A score describing how often bullying occurs at a school, with 1 being daily and 5 being never. |
+
+
+
+
+
