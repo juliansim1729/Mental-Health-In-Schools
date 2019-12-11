@@ -6,6 +6,8 @@ output: html_notebook
 
 While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at the mental health of several children in US high school level ages.
 
+We seek to understand what most commonly plagues teenagers in the mental health spectrum and what we can do to help address and alleviate this issue.
+
 ## Initial Setup
 ```{r}
 rm(list = ls())
@@ -58,9 +60,9 @@ boolSchoolData <-
   lapply(schooldata[,booleanRows], convertBoolean)
 
 schooldata[ , 1  ] <- boolSchoolData[1]
-schooldata[ , 12 ] <- boolSchoolData[3]
-schooldata[ , 13 ] <- boolSchoolData[4]
-schooldata[ , 14 ] <- boolSchoolData[5]
+schooldata[ , 12 ] <- boolSchoolData[2]
+schooldata[ , 13 ] <- boolSchoolData[3]
+schooldata[ , 14 ] <- boolSchoolData[4]
 ```
 
 ```{r}
@@ -125,8 +127,19 @@ studenthealth <-
 ## Analysis
 
 ### Random Plots
-```{r}
-gf_point(jitter(as.integer(discBullying)) ~ jitter(as.integer(discCyber)), data = schooldata)
+```{r fig.height=7, fig.width=8}
+p <-
+  schooldata %>%
+  ggplot(aes(x = bullyingRate)) +
+  geom_density(aes(x = bullyingRate, fill = recogBullying, alpha = 0.3)) +
+  facet_grid(rows = vars(discBullying), cols = vars(discCyber))
+
+p + 
+  labs(x = "Trained on Combating Cyberbullying", 
+       y = "Trained on Combating Bullying", 
+       title = "Bullying Rates With Antibullying Programs Put Into Place") + 
+  theme(axis.title.x = element_text(vjust = 205),
+        axis.title.y = element_text(angle = 270, vjust = 207))
 ```
 
 
@@ -143,7 +156,74 @@ limitationsLong %>%
   scale_fill_manual(values = c("tomato", "yellow2", "green2"))
 ```
 
+### Is funding really the biggest issue?
 
+```{r}
+limits = c(schooldata$limitComm, schooldata$limitFunding, schooldata$limitLegal, 
+           schooldata$limitMHProfAccess, schooldata$limitParental, schooldata$limitPaymentPol,
+           schooldata$limitStigma)
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitFunding, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitMHProfAccess, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitParental, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitPaymentPol, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitLegal, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitComm, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%  
+  ggplot() +
+  aes(x = limitStigma, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+
+schooldata %>%
+  ggplot() +
+  aes(x = limitMHProfAccess, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+```
+
+
+```{r}
+schooldata %>%
+  ggplot() +
+  aes(x = discBullying, fill = as.character(bullyingRate)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+```
+
+```{r}
+schooldataLong <- pivotLonger
+```
 
 
 
