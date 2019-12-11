@@ -4,9 +4,9 @@ output: html_notebook
 ---
 ## Abstract
 
-While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at the mental health of several children in US high school level ages.
+  While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at the mental health of several children in US high school level ages.
 
-We seek to understand what most commonly plagues teenagers in the mental health spectrum and what we can do to help address and alleviate this issue.
+  We seek to understand what most commonly plagues teenagers in the mental health spectrum and what we can do to help address and alleviate this issue.
 
 ## Initial Setup
 ```{r}
@@ -25,6 +25,12 @@ library(MASS)
 library(dplyr)
 ```
 
+### Datasets
+```{r}
+schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\2018109\\07_FINAL PU DATA_February 5, 2018\\pu_ssocs16.sas7bdat")
+studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-based_Student_Health_Survey__GSHS_.csv")
+```
+
 ### Functions
 ```{r}
 convertBoolean <- function(x) {
@@ -32,10 +38,10 @@ convertBoolean <- function(x) {
 }
 ```
 
-### Datasets
+### Palettes
 ```{r}
-schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\2018109\\07_FINAL PU DATA_February 5, 2018\\pu_ssocs16.sas7bdat")
-studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-based_Student_Health_Survey__GSHS_.csv")
+fiveColorPalette <- c("red2", "orange", "gold", "forestgreen", "royalblue")
+sevenColorPalette <- c("salmon", "orange", "gold", "forestgreen", "royalblue", "purple2", "pink1")
 ```
 
 ## Data Wrangling and Cleaning
@@ -119,6 +125,7 @@ studenthealth <-
 
 ### Global Student Health Survey
 | Variable Name | Description |
+| --- | --- |
 | Topic | A variable meant for categorizing, used to filter down to just mental health. |
 | Question | A question asked related to mental health, with the relevant time frame being the 12 months before the survey |
 | AffRespPct | Percent of people who responded yes to the question. |
@@ -129,7 +136,7 @@ studenthealth <-
 ## Analysis
 
 ### How Effective Are Antibullying Programs
-One of the most commonplace programs put into schools to combat bullying, are the aptly named anti-bullying programs, where teachers are trained to recognize bullying, as well as policies and practices regarding both cyber and physical bullying. We also look at the general response of "anti-bullying" where a school responds affirmatively if there are any anti-bullying programs put into place. 
+  One of the most commonplace programs put into schools to combat bullying, are the aptly named anti-bullying programs, where teachers are trained to recognize bullying, as well as policies and practices regarding both cyber and physical bullying. We also look at the general response of "anti-bullying" where a school responds affirmatively if there are any anti-bullying programs put into place. 
 
 ```{r fig.height=7, fig.width=8}
 schoolgraphdata1 <-  
@@ -157,12 +164,12 @@ sgraph1 +
 #### Bullying Rates for Various Combinations of Anti-Bullying Programs
 
 ```{r}
-#sgraph2 <-
+sgraph2 <-
   schooldata %>%
   ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying))) +
 
-#sgraph2 +
-  geom_boxplot(lwd = 0.3, color = "black") +
+sgraph2 +
+  geom_boxplot(lwd = 0.3, color = "black")
   geom_jitter(alpha = .15) +
   facet_grid(discBullying ~ discCyber) +
   theme(axis.text.x = element_text(vjust = 1))
@@ -186,13 +193,13 @@ coefTable
 ```
 
 #### Breakdown of the Effectiveness of Anti-Bullying Programs
-After running an ordered logistic regression model, we can see that none of these p values for our predictors are particularly significant, suggesting that training school staff in anti-bullying programs, recognizing bullying, and training them to learn discipline policies for both bullying and cyberbullying are all ultimately ineffective, and these policies don't create a significant impact on bullying rates.
+  After running an ordered logistic regression model, we can see that none of these p values for our predictors are particularly significant, suggesting that training school staff in anti-bullying programs, recognizing bullying, and training them to learn discipline policies for both bullying and cyberbullying are all ultimately ineffective, and these policies don't create a significant impact on bullying rates.
 
-Therefore, if all of these commonplace school anti-bullying programs are ineffective, what programs can schools put into place to create a significant drop in bullying rates?
+  Therefore, if all of these commonplace school anti-bullying programs are ineffective, what programs can schools put into place to create a significant drop in bullying rates? A good place to start looking is seeing what schools feel limit them from helping students out on the mental health spectrum.
 
-Sidenote: All of the differences between our levels for bullyingRates are significant, especially for the extremes, 1 and 5, which is reassuring.
+  Sidenote: All of the differences between our levels for bullyingRates are significant, especially for the extremes, 1 and 5, which is reassuring.
 
-### Which limitations are most limiting to schools?
+### Which limitations are most common to schools?
 ```{r}
 limitationsLong <- pivot_longer(limitations, everything(), names_to = "limType")
 
@@ -204,68 +211,64 @@ limitationsLong %>%
   scale_fill_manual(values = c("tomato", "yellow2", "green2"))
 ```
 
-#### How do these limitations affect a school's bullying rate?
-```{r}
-limits = c(schooldata$limitComm, schooldata$limitFunding, schooldata$limitLegal, 
-           schooldata$limitMHProfAccess, schooldata$limitParental, schooldata$limitPaymentPol,
-           schooldata$limitStigma)
-```
-
 ```{r}
 limBully = data.table(limitations, schooldata$bullyingRate)
-limBully %>%
+limBully <-
+  limBully %>%
   rename(bullyingRate = V2)
+
+limitationsLong2 <- pivot_longer(limBully, cols = c("comm", "funding", "legal", "MHProfAccess", "parental", "paymentPol", "stigma"), names_to = "limType") %>%
+  transmute(limType = limType, limScore = value, bullyingRate = bullyingRate) 
+
+limitationsLong3 <-
+  limitationsLong2 %>%
+  group_by(limType, limScore, bullyingRate) %>%
+  summarize(bullyingRateCount = n())
 ```
 
-
 ```{r}
-limBully %>%  
-  ggplot()
+limitationsLong2 %>%  
+  ggplot() +
+  aes(x = limScore, fill = limType) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = sevenColorPalette)
 ```
 
+#### Breakdown of What Do Schools Feel They Need
 
+  Although, we might say some combinations like Funding being a very common highly limiting factor jump out to us immediately, we should confirm it, as well as any others are statistically different from each other. We plan on taking two different tests for significance, one within limitation scores and one within limitation types. 
+
+  Taking a test between limitation types at a specified limitation score should tell us what, if anything is significantly percieved to be either in drastic need, or not particularly limiting in the case of limScore = 1. For the test between limitation scores for a certain limitation type should tell us how schools feel about that specific limitation, and how most schools consider it, whether to be a non-issue or of critical need.
+
+  While taking these tests, we make the assumption that if all limitations were of equal need, and thus controlled purely by a random, normal distribution, each limitation type would be equally distributed across each limitation score. Therefore, we assign the null distribution to be equal to the average count for each limitation type across each specific limitation score.
+
+#### Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
 ```{r}
-schooldata %>%  
+limitationsLong3 %>%  
   ggplot() +
-  aes(x = limitMHProfAccess, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+  aes(x = limType, fill = as.character(bullyingRate), y = bullyingRateCount) +
+  geom_bar(position = "stack", stat = "identity") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1)) +
+  facet_wrap( ~ limScore) +
+  scale_fill_manual(values = fiveColorPalette)
+```
 
-schooldata %>%  
-  ggplot() +
-  aes(x = limitParental, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+#### Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
+```{r}
+temp <-
+  limitationsLong3 %>%
+  group_by(limType, limScore) %>%
+  summarize(totCount = sum(bullyingRateCount))
 
-schooldata %>%  
+limitationsLong3 %>%
+  left_join(temp) %>%
+  mutate(propRate = bullyingRateCount/totCount) %>%
   ggplot() +
-  aes(x = limitPaymentPol, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
-
-schooldata %>%  
-  ggplot() +
-  aes(x = limitLegal, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
-
-schooldata %>%  
-  ggplot() +
-  aes(x = limitComm, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
-
-schooldata %>%  
-  ggplot() +
-  aes(x = limitStigma, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
-
-schooldata %>%
-  ggplot() +
-  aes(x = limitMHProfAccess, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+  aes(x = limType, fill = as.character(bullyingRate), y = propRate) +
+  geom_bar(position = "stack", stat = "identity") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1)) +
+  facet_wrap( ~ limScore) +
+  scale_fill_manual(values = fiveColorPalette)
 ```
 
 
