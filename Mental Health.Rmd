@@ -2,7 +2,9 @@
 title: "Mental Health and its Impact on Bullying in Schools"
 output: html_notebook
 ---
+## Abstract
 
+While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at bullying and academic achievement to create a better picture of the drastic impact it has on our world today.
 
 ## Initial Setup
 ```{r}
@@ -14,6 +16,7 @@ rm(list = ls())
 library("sas7bdat")
 library("tidyverse")
 library("ggplot2")
+library("data.table")
 ```
 
 ### Functions
@@ -29,6 +32,8 @@ schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\2018109\\07
 ```
 
 ## Data Wrangling and Cleaning
+
+### Cleaning the 2018-2019 School Survey on Crime and Safety
 ```{r}
 #selecting and cleaning up the chosen variables
 schooldata <-
@@ -44,19 +49,30 @@ schooldata <-
 ```
 
 ```{r}
-booleanRows = c(1, 11, 12, 13, 14)
+booleanRows = c(1, 12, 13, 14)
 
 boolSchoolData <-
   lapply(schooldata[,booleanRows], convertBoolean)
 
 schooldata[ , 1  ] <- boolSchoolData[1]
-schooldata[ , 11 ] <- boolSchoolData[2]
 schooldata[ , 12 ] <- boolSchoolData[3]
 schooldata[ , 13 ] <- boolSchoolData[4]
 schooldata[ , 14 ] <- boolSchoolData[5]
 ```
 
+```{r}
+limitations <- data.table(comm = schooldata$limitComm, 
+                          funding = schooldata$limitFunding, 
+                          legal = schooldata$limitLegal, 
+                          MHProfAccess = schooldata$limitMHProfAccess, 
+                          parental = schooldata$limitParental, 
+                          paymentPol = schooldata$limitPaymentPol, 
+                          stigma = schooldata$limitStigma)
+```
+
 ## Codebook
+| Variable Name | Description |
+| --- | --- |
 | ID | The ID number of the School, given for purposes of the study |
 | antiBullying | A boolean describing whether a school has anti-bullying programs put into place. |
 | assessAva | An aggregate describing whether a school has mental health services for diagnostic assessment available, with a score of 3 being the highest. |
@@ -72,6 +88,20 @@ schooldata[ , 14 ] <- boolSchoolData[5]
 | discBullying | A boolean describing whether school staff were trained in discipline policies and practices related to bullying. |
 | recogBullying | A boolean describing whether school staff were trained in recognizing bullying. |
 | bullyingRate | A score describing how often bullying occurs at a school, with 1 being daily and 5 being never. |
+
+## Analysis
+
+### Which limitations are most limiting?
+```{r}
+limitationsLong <- pivot_longer(limitations, everything(), names_to = "limType")
+
+limitationsLong %>%
+  group_by(limType, value) %>%
+  summarize(valCount = n()) %>%
+  ggplot(aes(x = limType, y = valCount)) + 
+  geom_col(aes(x = limType, y = valCount, fill = as.character(value))) +
+  scale_fill_manual(values = c("tomato", "yellow2", "green2"))
+```
 
 
 
