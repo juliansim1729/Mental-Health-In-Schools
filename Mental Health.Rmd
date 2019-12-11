@@ -21,7 +21,8 @@ library(ggplot2)
 library(data.table)
 library(mosaic)
 library(ggformula)
-library(ordinal)
+library(MASS)
+library(dplyr)
 ```
 
 ### Functions
@@ -44,7 +45,7 @@ studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-
 #selecting and cleaning up the chosen variables
 schooldata <-
   schooldataraw %>%
-  select(C0174, C0662, C0664, C0666, C0668, C0670, C0672, C0674, C0676, C0678, C0670, C0672, C0674, C0676, C0678, C0680, C0682, C0684, C0686, C0265, C0267, C0273, C0376) %>%
+  dplyr::select(C0174, C0662, C0664, C0666, C0668, C0670, C0672, C0674, C0676, C0678, C0670, C0672, C0674, C0676, C0678, C0680, C0682, C0684, C0686, C0265, C0267, C0273, C0376) %>%
   transmute(id = row_number(), antiBullying = C0174,
          assessAva = 6 - (C0662 + C0664 + C0666),
          treatAva = 6 - (C0668 + C0670 + C0672),
@@ -90,7 +91,7 @@ studenthealth <-
   group_by(Age, Sex, Question) %>%
   mutate(totalSS = sum(Sample_Size)) %>%
   mutate(AffRespPct = sum((Sample_Size)*(RespPct))/totalSS) %>%
-  select(Sex, Age, Question, AffRespPct, totalSS) %>% 
+  dplyr::select(Sex, Age, Question, AffRespPct, totalSS) %>% 
   unique() %>%
   arrange(Sex, Age)
 ```
@@ -128,6 +129,8 @@ studenthealth <-
 ## Analysis
 
 ### How Effective Are Antibullying Programs
+One of the most commonplace programs put into schools to combat bullying, are the aptly named anti-bullying programs, where teachers are trained to recognize bullying, as well as policies and practices regarding both cyber and physical bullying. We also look at the general response of "anti-bullying" where a school responds affirmatively if there are any anti-bullying programs put into place. 
+
 ```{r fig.height=7, fig.width=8}
 schoolgraphdata1 <-  
   schooldata %>%
@@ -139,7 +142,7 @@ dummyVerts <- data.frame(discCyber = c(T, F, T, F), discBullying = c(T, T, F, F)
 sgraph1 <-
   schooldata %>%
   ggplot(aes(x = bullyingRate)) +
-  geom_density(aes(x = bullyingRate, fill = recogBullying, alpha = 0.3)) +
+  geom_density(aes(x = bullyingRate, fill = recogBullying, alpha = 0.05)) +
   facet_grid(rows = vars(discBullying), cols = vars(discCyber)) +
   geom_vline(data = dummyVerts, aes(xintercept = Z))
 
@@ -151,28 +154,45 @@ sgraph1 +
         axis.title.y = element_text(angle = 270, vjust = 207))
 ```
 
+#### Bullying Rates for Various Combinations of Anti-Bullying Programs
+
 ```{r}
-
-sgraph2 <-
+#sgraph2 <-
   schooldata %>%
-  ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying)))
+  ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying))) +
 
-sgraph2 +
-  geom_boxplot(lwd = 0.2, color = "black") +
-  geom_jitter(alpha = .1) +
+#sgraph2 +
+  geom_boxplot(lwd = 0.3, color = "black") +
+  geom_jitter(alpha = .15) +
   facet_grid(discBullying ~ discCyber) +
   theme(axis.text.x = element_text(vjust = 1))
 ```
 
 
 ```{r}
-dummyPred <- c(c(F, F, F), c(F, F, T), c(F, T, F), c(F, T, T),
-               c(T, F, F), c(T, F, T), c(T, T, F), c(T, T, T),)
+orderedLogRegModel <- polr(as.factor(bullyingRate) ~ recogBullying + antiBullying + discCyber + discBullying, data = schooldata, Hess = T)
+
+coefTable <- coef(summary(orderedLogRegModel))
+#technically only true at infinite df, but decent approximation at 2100 obs
+pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
+
+
+coefTable <- cbind(coefTable, "p value" = pVal)
+ci <- confint(orderedLogRegModel)
+
+#printing out confidence intervals and the coefficient table
+ci
+coefTable
 ```
 
+#### Breakdown of the Effectiveness of Anti-Bullying Programs
+After running an ordered logistic regression model, we can see that none of these p values for our predictors are particularly significant, suggesting that training school staff in anti-bullying programs, recognizing bullying, and training them to learn discipline policies for both bullying and cyberbullying are all ultimately ineffective, and these policies don't create a significant impact on bullying rates.
 
+Therefore, if all of these commonplace school anti-bullying programs are ineffective, what programs can schools put into place to create a significant drop in bullying rates?
 
-### Which limitations are most limiting?
+Sidenote: All of the differences between our levels for bullyingRates are significant, especially for the extremes, 1 and 5, which is reassuring.
+
+### Which limitations are most limiting to schools?
 ```{r}
 limitationsLong <- pivot_longer(limitations, everything(), names_to = "limType")
 
@@ -184,19 +204,27 @@ limitationsLong %>%
   scale_fill_manual(values = c("tomato", "yellow2", "green2"))
 ```
 
-### Is funding really the biggest issue?
-
+#### How do these limitations affect a school's bullying rate?
 ```{r}
 limits = c(schooldata$limitComm, schooldata$limitFunding, schooldata$limitLegal, 
            schooldata$limitMHProfAccess, schooldata$limitParental, schooldata$limitPaymentPol,
            schooldata$limitStigma)
+```
 
-schooldata %>%  
-  ggplot() +
-  aes(x = limitFunding, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+```{r}
+limBully = data.table(limitations, schooldata$bullyingRate)
+limBully %>%
+  rename(bullyingRate = V2)
+```
 
+
+```{r}
+limBully %>%  
+  ggplot()
+```
+
+
+```{r}
 schooldata %>%  
   ggplot() +
   aes(x = limitMHProfAccess, fill = as.character(bullyingRate)) +
