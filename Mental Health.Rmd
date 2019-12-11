@@ -21,6 +21,7 @@ library(ggplot2)
 library(data.table)
 library(mosaic)
 library(ggformula)
+library(ordinal)
 ```
 
 ### Functions
@@ -126,20 +127,47 @@ studenthealth <-
 
 ## Analysis
 
-### Random Plots
+### How Effective Are Antibullying Programs
 ```{r fig.height=7, fig.width=8}
-p <-
+schoolgraphdata1 <-  
+  schooldata %>%
+  group_by(discBullying, discCyber) %>%
+  summarize(meanRate = mean(bullyingRate))
+
+dummyVerts <- data.frame(discCyber = c(T, F, T, F), discBullying = c(T, T, F, F), Z = schoolgraphdata1$meanRate)
+
+sgraph1 <-
   schooldata %>%
   ggplot(aes(x = bullyingRate)) +
   geom_density(aes(x = bullyingRate, fill = recogBullying, alpha = 0.3)) +
-  facet_grid(rows = vars(discBullying), cols = vars(discCyber))
+  facet_grid(rows = vars(discBullying), cols = vars(discCyber)) +
+  geom_vline(data = dummyVerts, aes(xintercept = Z))
 
-p + 
+sgraph1 + 
   labs(x = "Trained on Combating Cyberbullying", 
        y = "Trained on Combating Bullying", 
        title = "Bullying Rates With Antibullying Programs Put Into Place") + 
   theme(axis.title.x = element_text(vjust = 205),
         axis.title.y = element_text(angle = 270, vjust = 207))
+```
+
+```{r}
+
+sgraph2 <-
+  schooldata %>%
+  ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying)))
+
+sgraph2 +
+  geom_boxplot(lwd = 0.2, color = "black") +
+  geom_jitter(alpha = .1) +
+  facet_grid(discBullying ~ discCyber) +
+  theme(axis.text.x = element_text(vjust = 1))
+```
+
+
+```{r}
+dummyPred <- c(c(F, F, F), c(F, F, T), c(F, T, F), c(F, T, T),
+               c(T, F, F), c(T, F, T), c(T, T, F), c(T, T, T),)
 ```
 
 
