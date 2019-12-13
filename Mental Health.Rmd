@@ -1,19 +1,23 @@
 ---
 title: "Mental Health and its Impact on Bullying in Schools"
-output: html_notebook
+output: 
+  html_notebook:
+    toc: true
+    toc_depth: 2
+    #df_print: paged
 ---
-## Abstract
+# Abstract
 
   While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at the mental health of several children in US high school level ages.
 
   We seek to understand what most commonly plagues teenagers in the mental health spectrum and what we can do to help address and alleviate this issue.
 
-## Initial Setup
+# Initial Setup
 ```{r}
 rm(list = ls())
 ```
 
-### Libraries
+## Libraries
 ```{r}
 library(sas7bdat)
 library(tidyverse)
@@ -23,30 +27,35 @@ library(mosaic)
 library(ggformula)
 library(MASS)
 library(dplyr)
+library(sjstats)
+library(pwr)
+library(grid)
+library(gtable)
 ```
 
-### Datasets
+## Datasets
 ```{r}
 schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\2018109\\07_FINAL PU DATA_February 5, 2018\\pu_ssocs16.sas7bdat")
 studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-based_Student_Health_Survey__GSHS_.csv")
 ```
 
-### Functions
+## Functions
 ```{r}
 convertBoolean <- function(x) {
   return(x==1)
 }
 ```
 
-### Palettes
+## Palettes
 ```{r}
-fiveColorPalette <- c("red2", "orange", "gold", "forestgreen", "royalblue")
-sevenColorPalette <- c("salmon", "orange", "gold", "forestgreen", "royalblue", "purple2", "pink1")
+threeColorPalette <- c("red3", "gold", "forestgreen")
+fiveColorPalette <- c("red3", "orange", "gold", "forestgreen", "royalblue")
+sevenColorPalette <- c("red3", "orange", "gold", "forestgreen", "royalblue", "purple2", "pink1")
 ```
 
-## Data Wrangling and Cleaning
+# Data Wrangling and Cleaning
 
-### Cleaning the 2018-2019 School Survey on Crime and Safety
+## Cleaning the 2018-2019 School Survey on Crime and Safety
 ```{r}
 #selecting and cleaning up the chosen variables
 schooldata <-
@@ -62,12 +71,12 @@ schooldata <-
 ```
 
 ```{r}
-booleanRows = c(1, 12, 13, 14)
+booleanRows = c(2, 12, 13, 14)
 
 boolSchoolData <-
   lapply(schooldata[,booleanRows], convertBoolean)
 
-schooldata[ , 1  ] <- boolSchoolData[1]
+schooldata[ , 2  ] <- boolSchoolData[1]
 schooldata[ , 12 ] <- boolSchoolData[2]
 schooldata[ , 13 ] <- boolSchoolData[3]
 schooldata[ , 14 ] <- boolSchoolData[4]
@@ -83,7 +92,7 @@ limitations <- data.table(comm = schooldata$limitComm,
                           stigma = schooldata$limitStigma)
 ```
 
-### Cleaning the Global Student Health Survey
+## Cleaning the Global Student Health Survey
 ```{r}
 studenthealth <-
   studenthealthraw %>%
@@ -102,9 +111,9 @@ studenthealth <-
   arrange(Sex, Age)
 ```
 
-## Codebooks
+# Codebooks
 
-### 2018-2019 School Survey on Crime and Safety
+## 2018-2019 School Survey on Crime and Safety
 | Variable Name | Description |
 | --- | --- |
 | ID | The ID number of the School, given for purposes of the study |
@@ -123,7 +132,7 @@ studenthealth <-
 | recogBullying | A boolean describing whether school staff were trained in recognizing bullying. |
 | bullyingRate | A score describing how often bullying occurs at a school, with 1 being daily and 5 being never. |
 
-### Global Student Health Survey
+## Global Student Health Survey
 | Variable Name | Description |
 | --- | --- |
 | Topic | A variable meant for categorizing, used to filter down to just mental health. |
@@ -133,9 +142,14 @@ studenthealth <-
 | Sex | The sex of the recipients. |
 | Age | The age of the recipients. |
 
-## Analysis
+# Data
+```{r}
+schooldata
+studenthealth
+```
 
-### How Effective Are Antibullying Programs
+
+# How Effective Are Antibullying Programs
   One of the most commonplace programs put into schools to combat bullying, are the aptly named anti-bullying programs, where teachers are trained to recognize bullying, as well as policies and practices regarding both cyber and physical bullying. We also look at the general response of "anti-bullying" where a school responds affirmatively if there are any anti-bullying programs put into place. 
 
 ```{r fig.height=7, fig.width=8}
@@ -161,15 +175,15 @@ sgraph1 +
         axis.title.y = element_text(angle = 270, vjust = 207))
 ```
 
-#### Bullying Rates for Various Combinations of Anti-Bullying Programs
+## Bullying Rates for Various Combinations of Anti-Bullying Programs
 
 ```{r}
 sgraph2 <-
   schooldata %>%
-  ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying))) +
+  ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying)))
 
 sgraph2 +
-  geom_boxplot(lwd = 0.3, color = "black")
+  geom_boxplot(lwd = 0.3, color = "black") +
   geom_jitter(alpha = .15) +
   facet_grid(discBullying ~ discCyber) +
   theme(axis.text.x = element_text(vjust = 1))
@@ -192,14 +206,14 @@ ci
 coefTable
 ```
 
-#### Breakdown of the Effectiveness of Anti-Bullying Programs
+## Breakdown of the Effectiveness of Anti-Bullying Programs
   After running an ordered logistic regression model, we can see that none of these p values for our predictors are particularly significant, suggesting that training school staff in anti-bullying programs, recognizing bullying, and training them to learn discipline policies for both bullying and cyberbullying are all ultimately ineffective, and these policies don't create a significant impact on bullying rates.
 
   Therefore, if all of these commonplace school anti-bullying programs are ineffective, what programs can schools put into place to create a significant drop in bullying rates? A good place to start looking is seeing what schools feel limit them from helping students out on the mental health spectrum.
 
   Sidenote: All of the differences between our levels for bullyingRates are significant, especially for the extremes, 1 and 5, which is reassuring.
 
-### Which limitations are most common to schools?
+## Which limitations are most common to schools?
 ```{r}
 limitationsLong <- pivot_longer(limitations, everything(), names_to = "limType")
 
@@ -208,7 +222,7 @@ limitationsLong %>%
   summarize(valCount = n()) %>%
   ggplot(aes(x = limType, y = valCount)) + 
   geom_col(aes(x = limType, y = valCount, fill = as.character(value))) +
-  scale_fill_manual(values = c("tomato", "yellow2", "green2"))
+  scale_fill_manual(values = threeColorPalette)
 ```
 
 ```{r}
@@ -234,15 +248,40 @@ limitationsLong2 %>%
   scale_fill_manual(values = sevenColorPalette)
 ```
 
-#### Breakdown of What Do Schools Feel They Need
+## Breakdown of What Do Schools Feel They Need and What Do Schools Actually Need
 
-  Although, we might say some combinations like Funding being a very common highly limiting factor jump out to us immediately, we should confirm it, as well as any others are statistically different from each other. We plan on taking two different tests for significance, one within limitation scores and one within limitation types. 
+  Although, we might say some combinations like Funding being a very common highly limiting factor jump out to us immediately, we should confirm that it does in fact have a significant impact on bullying rates at schools, as well as any others which might have a noticeable impact. We do this through taking an analysis of variance of the different mean bullying rates for different limitation types in order to see which limitation type has the most impact on bullying rates.
+  
+  We do this by looking at different combinations of limitation score and limitation type. We plan to do this to answer the following key research question.
+ 
+### How effective are different limitations/resources at combating bullying in schools?
+```{r}
+limTypes = c("comm", "funding", "legal", "MHProfAccess", "parental", "paymentPol", "stigma")
+limPVals = c()
+limCohens = c()
 
-  Taking a test between limitation types at a specified limitation score should tell us what, if anything is significantly percieved to be either in drastic need, or not particularly limiting in the case of limScore = 1. For the test between limitation scores for a certain limitation type should tell us how schools feel about that specific limitation, and how most schools consider it, whether to be a non-issue or of critical need.
+for(type in limTypes) {
+  limitationsLongTemp <-
+    limitationsLong2 %>%
+    filter(limType == type)
+  
+   pVal <- summary(aov(bullyingRate ~ limScore, data = limitationsLongTemp))[[1]][["Pr(>F)"]][[1]]
+   limPVals = c(limPVals, pVal)
+   
+   limCohen <- cohens_f(aov(bullyingRate ~ limScore, data = limitationsLongTemp))[1,2]
+   limCohens = c(limCohens, limCohen)
+}
 
-  While taking these tests, we make the assumption that if all limitations were of equal need, and thus controlled purely by a random, normal distribution, each limitation type would be equally distributed across each limitation score. Therefore, we assign the null distribution to be equal to the average count for each limitation type across each specific limitation score.
+data.table(limTypes, limPVals, limCohens)
+```
 
-#### Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
+  We see that each limitation type does have an effect on a school's bullying rate, with the level of limitation effecting a school's bullying rate. However, we must look at whether the effects of these limitations are large enough to matter. 
+  
+  Using Cohen's F statistic, we get Cohen's F values in a range from about 0.077 to 0.127. According to Cohen's suggested Cohen's F Values of 0.1, 0.25, and 0.4 of small, medium, and large effect sizes respectively, we see that all of our effect sizes are in the "small" range, suggesting that these limitations have not much effect on bullying rates, despite their significance.
+  
+  We can see a graph of how bullying rates differ at different combinations of limitation type and level below.
+
+## Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
 ```{r}
 limitationsLong3 %>%  
   ggplot() +
@@ -253,7 +292,7 @@ limitationsLong3 %>%
   scale_fill_manual(values = fiveColorPalette)
 ```
 
-#### Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
+## Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
 ```{r}
 temp <-
   limitationsLong3 %>%
@@ -261,7 +300,7 @@ temp <-
   summarize(totCount = sum(bullyingRateCount))
 
 limitationsLong3 %>%
-  left_join(temp) %>%
+  left_join(temp, by = c("limType", "limScore")) %>%
   mutate(propRate = bullyingRateCount/totCount) %>%
   ggplot() +
   aes(x = limType, fill = as.character(bullyingRate), y = propRate) +
@@ -271,14 +310,40 @@ limitationsLong3 %>%
   scale_fill_manual(values = fiveColorPalette)
 ```
 
+  As we can see, although we see what could be a very slight increase in the proportion of schools with lower bullying rate at higher limitation levels, we see it's not a very large and distinct increase, mirroring what Cohen's F statistic suggests. 
 
+  Clearly, several of the most common anti-bullying programs and styles are all ineffectual, and the common limitations that schools frequently cite turn out not to have too much impact at all. This seems to spell out a grim future for the next generation of students, with bullying remaining a prevalent problem throughout all of our schools, with all of the most common methods against them being ultimately ineffectual and our schools asking for resources with virtually no impact. 
+  
+  Therefore, where should we go to find a solution to the bullying epidemic in our schools? Following our link between mental health and bullying, we move on to:
+  
+# Mental Health & Bullying: How Does Assessment and Treatment of Mental Health Impact Bullying  
 ```{r}
-schooldata %>%
-  ggplot() +
-  aes(x = discBullying, fill = as.character(bullyingRate)) +
-  geom_bar(position = "fill") +
-  scale_fill_manual(values = c("red", "yellow", "green", "blue", "purple"))
+sgraph3 <-
+  schooldata %>%
+  ggplot(aes(x = bullyingRate)) +
+  geom_density(aes(x = bullyingRate)) +
+  geom_rect(fill = "blue", alpha = 0.003, aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)) +
+  facet_grid(rows = vars(assessAva), cols = vars(treatAva), labeller = label_both)
+
+temp <-
+  schooldata %>%
+  group_by(assessAva, treatAva) %>%
+  summarize(count = n())
+
+dtText <- data.frame(
+  label = temp$count,
+  assessAva = c(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3),
+  treatAva = c(0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3)
+)
+ 
+sgraph3  +
+  geom_text(data = dtText, mapping = aes(x = 3, y = 0.75, label = label))
 ```
+
+We see that several combinations have very low sample sizes, especially at high levels of assessment and low levels of treatment and vice versa, as schools that do not have much assessment resources available tend to not be able to fund or support high treatment. Therefore, we see that outside of our three main diagonals (going from the top left to the bottom right), we have low sample sizes.
+
+
+
 
 ```{r}
 schooldataLong <- pivotLonger
