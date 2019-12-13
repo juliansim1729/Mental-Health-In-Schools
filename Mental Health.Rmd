@@ -4,7 +4,7 @@ output:
   html_notebook:
     toc: true
     toc_depth: 2
-    #df_print: paged
+    df_print: paged
 ---
 # Abstract
 
@@ -44,9 +44,16 @@ studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-
 convertBoolean <- function(x) {
   return(x==1)
 }
+
+convertString <- function(x) {
+  riskList <- c("Did not have close friends", "Most of the time or always felt lonely", "Most of the time or always were so worried about something that they could not sleep at night", "Seriously considered attempting suicide", "Made a plan about how they would attempt suicide", "Attempted suicide")
+  riskListShort <- c("No close friends", "Always lonely", "Worried to insomnia", "Considered suicide", "Planned suicide", "Attempted suicide")
+  
+  return(riskListShort[match(x, riskList)])
+}
 ```
 
-## Palettes
+## Palettes Used
 ```{r}
 threeColorPalette <- c("red3", "gold", "forestgreen")
 fiveColorPalette <- c("red3", "orange", "gold", "forestgreen", "royalblue")
@@ -104,11 +111,17 @@ studenthealth <-
 studenthealth <-
   studenthealth %>%
   group_by(Age, Sex, Question) %>%
-  mutate(totalSS = sum(Sample_Size)) %>%
-  mutate(AffRespPct = sum((Sample_Size)*(RespPct))/totalSS) %>%
-  dplyr::select(Sex, Age, Question, AffRespPct, totalSS) %>% 
+  mutate(SampleSize = sum(Sample_Size)) %>%
+  mutate(AffRespPct = sum((Sample_Size)*(RespPct))/SampleSize) %>%
+  dplyr::select(Sex, Age, Question, AffRespPct, SampleSize) %>% 
   unique() %>%
   arrange(Sex, Age)
+
+studenthealth$Age = as.numeric(levels(studenthealth$Age))[studenthealth$Age]
+
+studenthealth <- studenthealth
+studenthealth$Question = lapply(studenthealth$Question, convertString)
+studenthealth <- transform(studenthealth, Question = unlist(Question))
 ```
 
 # Codebooks
@@ -148,6 +161,57 @@ schooldata
 studenthealth
 ```
 
+# The Mental Health Epidemic in Schools
+
+```{r}
+studenthealth1 <-
+  studenthealth %>%
+  mutate(AffResponses = round(AffRespPct * SampleSize / 100)) %>%
+  group_by(Question, Sex) %>%
+  summarize(AffResponseTotal = sum(AffResponses))
+```
+
+
+```{r}
+dtText <- data.frame(
+  label = studenthealth1$AffResponseTotal,
+  Question = rep(c("No close friends", "No close friends", "Always lonely", "Always lonely", "Worried to insomnia", "Worried to insomnia", "Considered suicide", "Considered suicide", "Planned suicide", "Planned suicide", "Attempted suicide", "Attempted suicide")),
+  Sex = rep(c("F", "M"), 6),
+  locX = rep(15, 12),
+  locY = rep(c(8, 17), 6),
+  col = rep(c("red", "blue"), 6)
+)
+
+p <-
+  studenthealth %>%
+  ggplot() +
+  geom_line(aes(x = Age, y = AffRespPct, color = Sex)) +
+  facet_wrap( ~ as.factor(Question)) +
+  scale_color_manual(values = c("red2", "red2", "royalblue", "royalblue"), breaks = c("Female", "Male"))
+
+p + 
+  geom_text(data = dtText, mapping = aes(x = locX, y = locY, color = col, label = label)) +
+  ggtitle("Affirmative Response Count")
+
+```
+
+
+
+
+### A Note
+The considered suicide, planned suicide, and attempted suicide values are all lower than represented on the graph, as the students who have committed suicide are not included in this survey.
+
+## Suicide Rates
+```{r}
+studenthealth %>%
+  filter(Question == "Considered suicide"
+         | Question == "Planned suicide"
+         | Question == "Attempted suicide") %>%
+  ggplot() +
+  geom_line(aes(x = Age, y = AffRespPct, linetype = Question, color = Sex)) +
+  ggtitle("Suicide Rates, Divided by Sex")
+```
+
 
 # How Effective Are Antibullying Programs
   One of the most commonplace programs put into schools to combat bullying, are the aptly named anti-bullying programs, where teachers are trained to recognize bullying, as well as policies and practices regarding both cyber and physical bullying. We also look at the general response of "anti-bullying" where a school responds affirmatively if there are any anti-bullying programs put into place. 
@@ -180,13 +244,14 @@ sgraph1 +
 ```{r}
 sgraph2 <-
   schooldata %>%
-  ggplot(aes(x = bullyingRate, y = recogBullying, color = factor(antiBullying)))
+  ggplot(aes(y = bullyingRate, x = recogBullying, color = factor(antiBullying)))
 
 sgraph2 +
   geom_boxplot(lwd = 0.3, color = "black") +
   geom_jitter(alpha = .15) +
   facet_grid(discBullying ~ discCyber) +
-  theme(axis.text.x = element_text(vjust = 1))
+  theme(axis.text.x = element_text(vjust = 1)) +
+  ggtitle("Bullying Rates for Various Combinations of Anti-Bullying Programs")
 ```
 
 
@@ -222,7 +287,9 @@ limitationsLong %>%
   summarize(valCount = n()) %>%
   ggplot(aes(x = limType, y = valCount)) + 
   geom_col(aes(x = limType, y = valCount, fill = as.character(value))) +
-  scale_fill_manual(values = threeColorPalette)
+  scale_fill_manual(values = threeColorPalette) +
+  ggtitle("Common Limitations") +
+  guides(fill = guide_legend(title = "Limitation Levels"))
 ```
 
 ```{r}
@@ -245,7 +312,9 @@ limitationsLong2 %>%
   ggplot() +
   aes(x = limScore, fill = limType) +
   geom_bar(position = "dodge") +
-  scale_fill_manual(values = sevenColorPalette)
+  scale_fill_manual(values = sevenColorPalette) +
+  ggtitle("Counts at Various Limitation Types and Scores") +
+  guides(fill = guide_legend(title = "Limitation Type"))
 ```
 
 ## Breakdown of What Do Schools Feel They Need and What Do Schools Actually Need
@@ -289,10 +358,12 @@ limitationsLong3 %>%
   geom_bar(position = "stack", stat = "identity") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1)) +
   facet_wrap( ~ limScore) +
-  scale_fill_manual(values = fiveColorPalette)
+  scale_fill_manual(values = fiveColorPalette) +
+  guides(fill = guide_legend(title = "Bullying Rate")) +
+  ggtitle("Counts of Bullying Rate Occurence at Various Levels")
 ```
 
-## Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
+## Proportions of Occurences of Bullying Rates at Various Levels of Specific Limitations
 ```{r}
 temp <-
   limitationsLong3 %>%
@@ -307,7 +378,8 @@ limitationsLong3 %>%
   geom_bar(position = "stack", stat = "identity") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1)) +
   facet_wrap( ~ limScore) +
-  scale_fill_manual(values = fiveColorPalette)
+  scale_fill_manual(values = fiveColorPalette) +
+  ggtitle("Proportions of Bullying Rates at Various Levels of Limitations")
 ```
 
   As we can see, although we see what could be a very slight increase in the proportion of schools with lower bullying rate at higher limitation levels, we see it's not a very large and distinct increase, mirroring what Cohen's F statistic suggests. 
@@ -337,7 +409,8 @@ dtText <- data.frame(
 )
  
 sgraph3  +
-  geom_text(data = dtText, mapping = aes(x = 3, y = 0.75, label = label))
+  geom_text(data = dtText, mapping = aes(x = 3, y = 0.75, label = label)) +
+  ggtitle("Density Distributions of Bullying Rate at Different Combinations of Treatment and \nAssessment Levels, along with Assosciated Sample Sizes ")
 ```
 
 ## Some Concerning Sample Sizes
