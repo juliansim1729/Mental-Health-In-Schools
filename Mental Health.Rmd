@@ -384,3 +384,16 @@ coefTable
 ```
   
   We get a highly significant p-value, suggesting having available treatment is a key factor in reducing bullying rates.
+ 
+### Odds Ratio for Levels of Availability for Mental Health Treatment 
+```{r}
+exp(coefTable[1,1])
+```
+
+  The odds ratio is 0.8390, suggesting that for every additional level of treatment availability, the odds of having a higher level of bullying rate decrease by a factor of 0.8390.
+  
+## Considerations
+
+  However, while we have seen mental health treatment programs have a highly significant and effective effect on bullying rates, mental health treatment programs are not available to many schools and educational systems across the country, as they require several things - funding, mental health professionals, community and familial support - all things schools seemingly recognize they need.
+
+  But from the apparent differences between the significance and effectiveness of the limitation levels, we can see that even schools with access to these resources, still do not have effective drops in their bullying rates, suggesting these resources are being funnelled into programs with minimal impact. For those educational entities with the necessary resources, we strongly encourage putting in significant investment in mental health treatment. However, we recognize that not all schools have access to these resources, and cheaper alternatives must continue to be found.
