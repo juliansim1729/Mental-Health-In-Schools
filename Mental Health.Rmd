@@ -194,7 +194,7 @@ sgraph2 +
 orderedLogRegModel <- polr(as.factor(bullyingRate) ~ recogBullying + antiBullying + discCyber + discBullying, data = schooldata, Hess = T)
 
 coefTable <- coef(summary(orderedLogRegModel))
-#technically only true at infinite df, but decent approximation at 2100 obs
+#technically only true at infinite df, but decent approximation at 2100 observations
 pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
 
 
@@ -316,7 +316,7 @@ limitationsLong3 %>%
   
   Therefore, where should we go to find a solution to the bullying epidemic in our schools? Following our link between mental health and bullying, we move on to:
   
-# Mental Health & Bullying: How Does Assessment and Treatment of Mental Health Impact Bullying  
+# Mental Health & Bullying: How Does Assessment and Treatment of Mental Health Impact Bullying
 ```{r}
 sgraph3 <-
   schooldata %>%
@@ -340,14 +340,47 @@ sgraph3  +
   geom_text(data = dtText, mapping = aes(x = 3, y = 0.75, label = label))
 ```
 
+## Some Concerning Sample Sizes
 We see that several combinations have very low sample sizes, especially at high levels of assessment and low levels of treatment and vice versa, as schools that do not have much assessment resources available tend to not be able to fund or support high treatment. Therefore, we see that outside of our three main diagonals (going from the top left to the bottom right), we have low sample sizes.
 
+Therefore, we should probably refrain from doing an analysis on a (multiplicative) combination of these two variables due to the high chance of the low sample sizes at the extremes skewing our data.
 
-
-
+## Breakdown of the Effectiveness of Assessment and Treatment of Mental Health
 ```{r}
-schooldataLong <- pivotLonger
+orderedLogRegModel <- polr(as.factor(bullyingRate) ~ treatAva + assessAva, data = schooldata, Hess = T)
+
+coefTable <- coef(summary(orderedLogRegModel))
+#technically only true at infinite df, but decent approximation at 2100 obs
+pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
+
+
+coefTable <- cbind(coefTable, "p value" = pVal)
+ci <- confint(orderedLogRegModel)
+
+#printing out confidence intervals and the coefficient table
+ci
+coefTable
 ```
 
+  From here, we see that a school having mental health services for treatment is highly related to bullying rate, with a p value of about 0.0159, below our standard threshold of 0.05, while assessment is not as important. Our data suggests that the key factor in decreasing bullying rates is having a place where students can go for mental health issues - when students feel their mental health is of a concern, and the school administration works to ensure that students can get the mental health treatment they deserve, bullying rates drop.
+  
+  We repeat the same process, isolating our variable. 
+  
+## Breakdown of the Effectiveness of Mental Health Treatment Programs on Bullying Rates
+```{r}
+orderedLogRegModel <- polr(as.factor(bullyingRate) ~ treatAva, data = schooldata, Hess = T)
+
+coefTable <- coef(summary(orderedLogRegModel))
+#technically only true at infinite df, but decent approximation at 2100 observations
+pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
 
 
+coefTable <- cbind(coefTable, "p value" = pVal)
+ci <- confint(orderedLogRegModel)
+
+#printing out confidence intervals and the coefficient table
+ci
+coefTable
+```
+  
+  We get a highly significant p-value, suggesting having available treatment is a key factor in reducing bullying rates.
