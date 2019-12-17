@@ -127,6 +127,15 @@ studenthealth$Question = lapply(studenthealth$Question, convertString)
 studenthealth <- transform(studenthealth, Question = unlist(Question))
 ```
 
+# Preliminary Look at Data
+```{r}
+head(schooldata)
+
+head(studenthealth)
+```
+
+
+
 # Codebooks
 
 ## 2018-2019 School Survey on Crime and Safety
