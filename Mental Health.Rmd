@@ -6,11 +6,11 @@ output:
     toc_depth: 2
     df_print: paged
 ---
-# Abstract
+# Research Question
 
-  While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at the mental health of several children in US high school level ages.
+  While mental health has always been a factor in our education, it has only been recently that it has risen to the forefront of conversation about the impact it has on the education and school environments. In order to capture the impact mental health has on our educational systems today, we look at the mental health of several children in US high school level ages, through bullying rates in schools. We choose to look at bullying rate as it is a common and accurate predictor of general mental health in schools (Schneider, O'Donnell, Stueve, & Coulter), while being easier for an administration to measure as survey respondents may not always be forthcoming.
 
-  We seek to understand what most commonly plagues teenagers in the mental health spectrum and what we can do to help address and alleviate this issue.
+  We try to depict an accurate picture of the terrible condition of mental health in today's society and answer the following question: What can schools do to effectively decrease bullying rates, and subsequently improve general mental health?
 
 # Initial Setup
 ```{r}
@@ -154,12 +154,6 @@ studenthealth <- transform(studenthealth, Question = unlist(Question))
 | Sample Size | The amount of people who answered this question, with the specified sex and age. |
 | Sex | The sex of the recipients. |
 | Age | The age of the recipients. |
-
-# Data
-```{r}
-schooldata
-studenthealth
-```
 
 # The Mental Health Epidemic in Schools
 
@@ -469,4 +463,12 @@ exp(coefTable[1,1])
 
   However, while we have seen mental health treatment programs have a highly significant and effective effect on bullying rates, mental health treatment programs are not available to many schools and educational systems across the country, as they require several things - funding, mental health professionals, community and familial support - all things schools seemingly recognize they need.
 
-  But from the apparent differences between the significance and effectiveness of the limitation levels, we can see that even schools with access to these resources, still do not have effective drops in their bullying rates, suggesting these resources are being funnelled into programs with minimal impact. For those educational entities with the necessary resources, we strongly encourage putting in significant investment in mental health treatment. However, we recognize that not all schools have access to these resources, and cheaper alternatives must continue to be found.
+  But from the apparent differences between the significance and effectiveness of the limitation levels, we can see that even schools with access to these resources, still do not have effective drops in their bullying rates, suggesting these resources are being funnelled into programs with minimal impact. For those educational entities with the necessary resources, we strongly encourage putting in significant investment in concrete mental health treatment programs, rather than wasting resources on programs that have been found to be ineffective, such as mere posters or training teachers. 
+  
+  However, we recognize that not all schools have access to these resources, and cheaper alternatives must continue to be found. Further work could be done with a cost analysis of each of these mental health programs, along with their subsequent impact, to identify exactly how much each dollar contributes when granted to different programs. By finding the best combination of funding for programs, this would truly address the problem for all schools, not just those with adequate funding. 
+  
+  While such an analysis would be optimal, the data collection would be much larger by several factors, as it would require schools to disclose budgets and their breakdown, and maintaining accurate breakdowns would be a highly tedious process.
+  
+  
+  
+  
