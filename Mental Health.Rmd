@@ -41,6 +41,7 @@ studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-
 
 ## Functions
 ```{r}
+#functions used with lapply to clean data
 convertBoolean <- function(x) {
   return(x==1)
 }
@@ -55,6 +56,7 @@ convertString <- function(x) {
 
 ## Palettes Used
 ```{r}
+#using a regular color palette in order to help with continuity and not default to blinding neon
 threeColorPalette <- c("red3", "gold", "forestgreen")
 fiveColorPalette <- c("red3", "orange", "gold", "forestgreen", "royalblue")
 sevenColorPalette <- c("red3", "orange", "gold", "forestgreen", "royalblue", "purple2", "pink1")
@@ -69,8 +71,8 @@ schooldata <-
   schooldataraw %>%
   dplyr::select(C0174, C0662, C0664, C0666, C0668, C0670, C0672, C0674, C0676, C0678, C0670, C0672, C0674, C0676, C0678, C0680, C0682, C0684, C0686, C0265, C0267, C0273, C0376) %>%
   transmute(id = row_number(), antiBullying = C0174,
-         assessAva = 6 - (C0662 + C0664 + C0666),
-         treatAva = 6 - (C0668 + C0670 + C0672),
+         assessAva = 6 - (C0662 + C0664 + C0666), #compiling assessment scores into one score
+         treatAva = 6 - (C0668 + C0670 + C0672), #same for treatment
          limitMHProfAccess = C0674, limitFunding = C0676, limitLegal = C0678, limitParental = C0680, 
          limitComm = C0682, limitPaymentPol = C0684, limitStigma = C0686,
          discCyber = C0265, discBullying = C0267, recogBullying = C0273,
@@ -78,6 +80,7 @@ schooldata <-
 ```
 
 ```{r}
+#taking binary variables and converting them to booleans
 booleanRows = c(2, 12, 13, 14)
 
 boolSchoolData <-
@@ -90,6 +93,7 @@ schooldata[ , 14 ] <- boolSchoolData[4]
 ```
 
 ```{r}
+#creating a new data table with just limitations
 limitations <- data.table(comm = schooldata$limitComm, 
                           funding = schooldata$limitFunding, 
                           legal = schooldata$limitLegal, 
@@ -216,7 +220,8 @@ schoolgraphdata1 <-
   group_by(discBullying, discCyber) %>%
   summarize(meanRate = mean(bullyingRate))
 
-dummyVerts <- data.frame(discCyber = c(T, F, T, F), discBullying = c(T, T, F, F), Z = schoolgraphdata1$meanRate)
+dummyVerts <- data.frame(discCyber = c(T, F, T, F), discBullying = c(T, T, F, F), 
+                         Z =schoolgraphdata1$meanRate) #df with dummy vars at mean rate for each combination
 
 sgraph1 <-
   schooldata %>%
@@ -404,7 +409,7 @@ dtText <- data.frame(
  
 sgraph3  +
   geom_text(data = dtText, mapping = aes(x = 3, y = 0.75, label = label)) +
-  ggtitle("Density Distributions of Bullying Rate at Different Combinations of Treatment and \nAssessment Levels, along with Assosciated Sample Sizes ")
+  ggtitle("Density Distributions of Bullying Rate at Different Combinations of Treatment and \nAssessment Levels, along with Associated Sample Sizes")
 ```
 
 ## Some Concerning Sample Sizes
@@ -457,7 +462,7 @@ coefTable
 exp(coefTable[1,1])
 ```
 
-  The odds ratio is 0.8390, suggesting that for every additional level of treatment availability, the odds of having a higher level of bullying rate decrease by a factor of 0.8390.
+  The odds ratio is 0.8390, suggesting that for every additional level of treatment availability (which ranges from 0 to 3), the odds of having a higher level of bullying rate decrease by a factor of 0.8390. 
   
 ## Considerations
 
@@ -470,5 +475,8 @@ exp(coefTable[1,1])
   While such an analysis would be optimal, the data collection would be much larger by several factors, as it would require schools to disclose budgets and their breakdown, and maintaining accurate breakdowns would be a highly tedious process.
   
   
-  
+## Works Cited
+  Schneider, Shari Kessel, O'Donnell, Lydia, Stueve, Ann, Coulter, Robert W. S. “Cyberbullying, School 
+    Bullying, and Psychological Distress: A Regional Census of High School Students”, American Journal of 
+    Public Health 102, no. 1 (January 1, 2012): pp. 171-177.
   
