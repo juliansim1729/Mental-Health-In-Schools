@@ -4,7 +4,6 @@ output:
   html_notebook:
     toc: true
     toc_depth: 2
-    df_print: paged
 ---
 # Research Question
 
@@ -35,8 +34,8 @@ library(gtable)
 
 ## Datasets
 ```{r}
-schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\2018109\\07_FINAL PU DATA_February 5, 2018\\pu_ssocs16.sas7bdat")
-studenthealthraw <- read.csv("C:\\Users\\julia\\Downloads\\DASH_-_Global_School-based_Student_Health_Survey__GSHS_.csv")
+schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\Mental-Health-In-Schools\\2018-2019 School Survey on Crime and Safety.sas7bdat")
+studenthealthraw <- read.csv("C:\\Users\\julia\\OneDrive\\Desktop\\Mental-Health-In-Schools\\Global Student Health Survey.csv")
 ```
 
 ## Functions
@@ -173,18 +172,20 @@ studenthealth1 <-
 ```{r}
 dtText <- data.frame(
   label = studenthealth1$AffResponseTotal,
-  Question = rep(c("No close friends", "No close friends", "Always lonely", "Always lonely", "Worried to insomnia", "Worried to insomnia", "Considered suicide", "Considered suicide", "Planned suicide", "Planned suicide", "Attempted suicide", "Attempted suicide")),
+  Question = c("No close friends", "No close friends", "Always lonely", "Always lonely", "Worried to insomnia", "Worried to insomnia", "Considered suicide", "Considered suicide", "Planned suicide", "Planned suicide", "Attempted suicide", "Attempted suicide"),
   Sex = rep(c("F", "M"), 6),
   locX = rep(15, 12),
   locY = rep(c(8, 17), 6),
   col = rep(c("red", "blue"), 6)
 )
 
+studenthealth$Question = factor(studenthealth$Question, levels = c("No close friends", "Always lonely", "Worried to insomnia", "Considered suicide", "Planned suicide", "Attempted suicide")) #assigning order to facets
+
 p <-
   studenthealth %>%
   ggplot() +
   geom_line(aes(x = Age, y = AffRespPct, color = Sex)) +
-  facet_wrap( ~ as.factor(Question)) +
+  facet_wrap( ~ Question) +
   scale_color_manual(values = c("red2", "red2", "royalblue", "royalblue"), breaks = c("Female", "Male"))
 
 p + 
@@ -193,11 +194,9 @@ p +
 
 ```
 
-
-
-
-### A Note
-The considered suicide, planned suicide, and attempted suicide values are all lower than represented on the graph, as the students who have committed suicide are not included in this survey.
+  Straight percentages are on the y-axis, with sample sizes for the assosciated sex close(ish) to the line. We see the percentage of people who attempt suicide is about 12%, planning is around 14%, and considering is around 16%. More shockingly, these graphics do not include those who have committed suicide, driving these percentages and numbers down, if anything. About one in seven high school aged students have attempted suicide, despite having things we might assume would prevent it, like having close friends.
+  
+  On a case by case basis, while most people, around 95% consider themselves to have close friends, significant portions of them feel lonely and lost, despite having those close friends. And these preliminary mental health struggles is what turns people to consider suicide, to plan suicide, to attempt suicide, and to commit suicide. Schools must do something to help combat mental health struggles.
 
 ## Suicide Rates
 ```{r}
