@@ -34,8 +34,8 @@ library(gtable)
 
 ## Datasets
 ```{r}
-schooldataraw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\Mental-Health-In-Schools\\2018-2019 School Survey on Crime and Safety.sas7bdat")
-studenthealthraw <- read.csv("C:\\Users\\julia\\OneDrive\\Desktop\\Mental-Health-In-Schools\\Global Student Health Survey.csv")
+SchoolDataRaw <- read.sas7bdat("C:\\Users\\julia\\OneDrive\\Desktop\\Mental-Health-In-Schools\\2018-2019 School Survey on Crime and Safety.sas7bdat")
+StudentHealthRaw <- read.csv("C:\\Users\\julia\\OneDrive\\Desktop\\Mental-Health-In-Schools\\Global Student Health Survey.csv")
 ```
 
 ## Functions
@@ -71,8 +71,8 @@ sevenColorPalette <- c("red3", "orange", "gold", "forestgreen", "royalblue", "pu
 ## Cleaning the 2018-2019 School Survey on Crime and Safety
 ```{r}
 #selecting and cleaning up the chosen variables
-schooldata <-
-  schooldataraw %>%
+SchoolData <-
+  SchoolDataRaw %>%
   dplyr::select(C0174, C0662, C0664, C0666, C0668, C0670, C0672, C0674, C0676, C0678, C0670, C0672, C0674, C0676, C0678, C0680, C0682, C0684, C0686, C0265, C0267, C0273, C0376) %>%
   transmute(id = row_number(), antiBullying = C0174,
          assessAva = 6 - (C0662 + C0664 + C0666), #compiling assessment scores into one score
@@ -87,37 +87,37 @@ schooldata <-
 #taking binary variables and converting them to booleans
 booleanRows = c(2, 12, 13, 14)
 
-boolSchoolData <-
-  lapply(schooldata[,booleanRows], convertBoolean)
+BoolSchoolData <-
+  lapply(SchoolData[,booleanRows], convertBoolean)
 
-schooldata[ , 2  ] <- boolSchoolData[1]
-schooldata[ , 12 ] <- boolSchoolData[2]
-schooldata[ , 13 ] <- boolSchoolData[3]
-schooldata[ , 14 ] <- boolSchoolData[4]
+SchoolData[ , 2  ] <- BoolSchoolData[1]
+SchoolData[ , 12 ] <- BoolSchoolData[2]
+SchoolData[ , 13 ] <- BoolSchoolData[3]
+SchoolData[ , 14 ] <- BoolSchoolData[4]
 ```
 
 ```{r}
 #creating a new data table with just limitations
-limitations <- data.table(comm = schooldata$limitComm, 
-                          funding = schooldata$limitFunding, 
-                          legal = schooldata$limitLegal, 
-                          MHProfAccess = schooldata$limitMHProfAccess, 
-                          parental = schooldata$limitParental, 
-                          paymentPol = schooldata$limitPaymentPol, 
-                          stigma = schooldata$limitStigma)
+Limitations <- data.table(comm = SchoolData$limitComm, 
+                          funding = SchoolData$limitFunding, 
+                          legal = SchoolData$limitLegal, 
+                          MHProfAccess = SchoolData$limitMHProfAccess, 
+                          parental = SchoolData$limitParental, 
+                          paymentPol = SchoolData$limitPaymentPol, 
+                          stigma = SchoolData$limitStigma)
 ```
 
 ## Cleaning the Global Student Health Survey
 ```{r}
-studenthealth <-
-  studenthealthraw %>%
+StudentHealth <-
+  StudentHealthRaw %>%
   transmute(Topic, Description, Question = Greater_Risk_Question, RespPct = Greater_Risk_Data_Value, Sample_Size, Sex, Age) %>%
   filter(Topic == "Mental Health" & Sex != "Total" & 
            Age != "Total" & Age != "13-15" & Age != "13-17") %>%
   na.omit()
 
-studenthealth <-
-  studenthealth %>%
+StudentHealth <-
+  StudentHealth %>%
   group_by(Age, Sex, Question) %>%
   mutate(SampleSize = sum(Sample_Size)) %>%
   mutate(AffRespPct = sum((Sample_Size)*(RespPct))/SampleSize) %>%
@@ -125,18 +125,18 @@ studenthealth <-
   unique() %>%
   arrange(Sex, Age)
 
-studenthealth$Age = as.numeric(levels(studenthealth$Age))[studenthealth$Age]
+StudentHealth$Age = as.numeric(levels(StudentHealth$Age))[StudentHealth$Age]
 
-studenthealth <- studenthealth
-studenthealth$Question = lapply(studenthealth$Question, convertString)
-studenthealth <- transform(studenthealth, Question = unlist(Question))
+StudentHealth <- StudentHealth
+StudentHealth$Question = lapply(StudentHealth$Question, convertString)
+StudentHealth <- transform(StudentHealth, Question = unlist(Question))
 ```
 
 # Preliminary Look at Data
 ```{r}
-head(schooldata)
+head(SchoolData)
 
-head(studenthealth)
+head(StudentHealth)
 ```
 
 
@@ -175,8 +175,8 @@ head(studenthealth)
 # The Mental Health Epidemic in Schools
 
 ```{r}
-studenthealth1 <-
-  studenthealth %>%
+StudentHealth1 <-
+  StudentHealth %>%
   mutate(AffResponses = round(AffRespPct * SampleSize / 100)) %>%
   group_by(Question, Sex) %>%
   summarize(AffResponseTotal = sum(AffResponses))
@@ -185,7 +185,7 @@ studenthealth1 <-
 
 ```{r}
 dtText <- data.frame(
-  label = studenthealth1$AffResponseTotal,
+  label = StudentHealth1$AffResponseTotal,
   Question = c("No close friends", "No close friends", "Always lonely", "Always lonely", "Worried to insomnia", "Worried to insomnia", "Considered suicide", "Considered suicide", "Planned suicide", "Planned suicide", "Attempted suicide", "Attempted suicide"),
   Sex = rep(c("F", "M"), 6),
   locX = rep(15, 12),
@@ -193,10 +193,10 @@ dtText <- data.frame(
   col = rep(c("red", "blue"), 6)
 )
 
-studenthealth$Question = factor(studenthealth$Question, levels = c("No close friends", "Always lonely", "Worried to insomnia", "Considered suicide", "Planned suicide", "Attempted suicide")) #assigning order to facets
+StudentHealth$Question = factor(StudentHealth$Question, levels = c("No close friends", "Always lonely", "Worried to insomnia", "Considered suicide", "Planned suicide", "Attempted suicide")) #assigning order to facets
 
 p <-
-  studenthealth %>%
+  StudentHealth %>%
   ggplot() +
   geom_line(aes(x = Age, y = AffRespPct, color = Sex)) +
   facet_wrap( ~ Question) +
@@ -214,7 +214,7 @@ p +
 
 ## Suicide Rates
 ```{r}
-studenthealth %>%
+StudentHealth %>%
   filter(Question == "Considered suicide"
          | Question == "Planned suicide"
          | Question == "Attempted suicide") %>%
@@ -229,15 +229,15 @@ studenthealth %>%
 
 ```{r fig.height=7, fig.width=8}
 schoolgraphdata1 <-  
-  schooldata %>%
+  SchoolData %>%
   group_by(discBullying, discCyber) %>%
   summarize(meanRate = mean(bullyingRate))
 
 dummyVerts <- data.frame(discCyber = c(T, F, T, F), discBullying = c(T, T, F, F), 
-                         Z =schoolgraphdata1$meanRate) #df with dummy vars at mean rate for each combination
+                         Z =schoolgraphdata1$meanRate)  # df with dummy vars at mean rate for each combination
 
 sgraph1 <-
-  schooldata %>%
+  SchoolData %>%
   ggplot(aes(x = bullyingRate)) +
   geom_density(aes(x = bullyingRate, fill = recogBullying, alpha = 0.05)) +
   facet_grid(rows = vars(discBullying), cols = vars(discCyber)) +
@@ -255,7 +255,7 @@ sgraph1 +
 
 ```{r}
 sgraph2 <-
-  schooldata %>%
+  SchoolData %>%
   ggplot(aes(y = bullyingRate, x = recogBullying, color = factor(antiBullying)))
 
 sgraph2 +
@@ -268,17 +268,17 @@ sgraph2 +
 
 
 ```{r}
-orderedLogRegModel <- polr(as.factor(bullyingRate) ~ recogBullying + antiBullying + discCyber + discBullying, data = schooldata, Hess = T)
+orderedLogRegModel <- polr(as.factor(bullyingRate) ~ recogBullying + antiBullying + discCyber + discBullying, data = SchoolData, Hess = T)
 
 coefTable <- coef(summary(orderedLogRegModel))
-#technically only true at infinite df, but decent approximation at 2100 observations
+# technically only true at infinite df, but decent approximation at 2100 observations
 pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
 
 
 coefTable <- cbind(coefTable, "p value" = pVal)
 ci <- confint(orderedLogRegModel)
 
-#printing out confidence intervals and the coefficient table
+# printing out confidence intervals and the coefficient table
 ci
 coefTable
 ```
@@ -292,9 +292,9 @@ coefTable
 
 ## Which limitations are most common to schools?
 ```{r}
-limitationsLong <- pivot_longer(limitations, everything(), names_to = "limType")
+LimitationsLong <- pivot_longer(Limitations, everything(), names_to = "limType")
 
-limitationsLong %>%
+LimitationsLong %>%
   group_by(limType, value) %>%
   summarize(valCount = n()) %>%
   ggplot(aes(x = limType, y = valCount)) + 
@@ -305,22 +305,22 @@ limitationsLong %>%
 ```
 
 ```{r}
-limBully = data.table(limitations, schooldata$bullyingRate)
+limBully = data.table(Limitations, SchoolData$bullyingRate)
 limBully <-
   limBully %>%
   rename(bullyingRate = V2)
 
-limitationsLong2 <- pivot_longer(limBully, cols = c("comm", "funding", "legal", "MHProfAccess", "parental", "paymentPol", "stigma"), names_to = "limType") %>%
+LimitationsLong2 <- pivot_longer(limBully, cols = c("comm", "funding", "legal", "MHProfAccess", "parental", "paymentPol", "stigma"), names_to = "limType") %>%
   transmute(limType = limType, limScore = value, bullyingRate = bullyingRate) 
 
-limitationsLong3 <-
-  limitationsLong2 %>%
+LimitationsLong3 <-
+  LimitationsLong2 %>%
   group_by(limType, limScore, bullyingRate) %>%
   summarize(bullyingRateCount = n())
 ```
 
 ```{r}
-limitationsLong2 %>%  
+LimitationsLong2 %>%  
   ggplot() +
   aes(x = limScore, fill = limType) +
   geom_bar(position = "dodge") +
@@ -342,14 +342,14 @@ limPVals = c()
 limCohens = c()
 
 for(type in limTypes) {
-  limitationsLongTemp <-
-    limitationsLong2 %>%
+  LimitationsLongTemp <-
+    LimitationsLong2 %>%
     filter(limType == type)
   
-   pVal <- summary(aov(bullyingRate ~ limScore, data = limitationsLongTemp))[[1]][["Pr(>F)"]][[1]]
+   pVal <- summary(aov(bullyingRate ~ limScore, data = LimitationsLongTemp))[[1]][["Pr(>F)"]][[1]]
    limPVals = c(limPVals, pVal)
    
-   limCohen <- cohens_f(aov(bullyingRate ~ limScore, data = limitationsLongTemp))[1,2]
+   limCohen <- cohens_f(aov(bullyingRate ~ limScore, data = LimitationsLongTemp))[1,2]
    limCohens = c(limCohens, limCohen)
 }
 
@@ -364,7 +364,7 @@ data.table(limTypes, limPVals, limCohens)
 
 ## Straight Counts of Occurences of Bullying Rates at Various Levels of Specific Limitations
 ```{r}
-limitationsLong3 %>%  
+LimitationsLong3 %>%  
   ggplot() +
   aes(x = limType, fill = as.character(bullyingRate), y = bullyingRateCount) +
   geom_bar(position = "stack", stat = "identity") +
@@ -378,11 +378,11 @@ limitationsLong3 %>%
 ## Proportions of Occurences of Bullying Rates at Various Levels of Specific Limitations
 ```{r}
 temp <-
-  limitationsLong3 %>%
+  LimitationsLong3 %>%
   group_by(limType, limScore) %>%
   summarize(totCount = sum(bullyingRateCount))
 
-limitationsLong3 %>%
+LimitationsLong3 %>%
   left_join(temp, by = c("limType", "limScore")) %>%
   mutate(propRate = bullyingRateCount/totCount) %>%
   ggplot() +
@@ -403,14 +403,14 @@ limitationsLong3 %>%
 # Mental Health & Bullying: How Does Assessment and Treatment of Mental Health Impact Bullying
 ```{r}
 sgraph3 <-
-  schooldata %>%
+  SchoolData %>%
   ggplot(aes(x = bullyingRate)) +
   geom_density(aes(x = bullyingRate)) +
   geom_rect(fill = "blue", alpha = 0.003, aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)) +
   facet_grid(rows = vars(assessAva), cols = vars(treatAva), labeller = label_both)
 
 temp <-
-  schooldata %>%
+  SchoolData %>%
   group_by(assessAva, treatAva) %>%
   summarize(count = n())
 
@@ -432,17 +432,17 @@ Therefore, we should probably refrain from doing an analysis on a (multiplicativ
 
 ## Breakdown of the Effectiveness of Assessment and Treatment of Mental Health
 ```{r}
-orderedLogRegModel <- polr(as.factor(bullyingRate) ~ treatAva + assessAva, data = schooldata, Hess = T)
+orderedLogRegModel <- polr(as.factor(bullyingRate) ~ treatAva + assessAva, data = SchoolData, Hess = T)
 
 coefTable <- coef(summary(orderedLogRegModel))
-#technically only true at infinite df, but decent approximation at 2100 obs
+# technically only true at infinite df, but decent approximation at 2100 obs
 pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
 
 
 coefTable <- cbind(coefTable, "p value" = pVal)
 ci <- confint(orderedLogRegModel)
 
-#printing out confidence intervals and the coefficient table
+# printing out confidence intervals and the coefficient table
 ci
 coefTable
 ```
@@ -453,17 +453,17 @@ coefTable
   
 ## Breakdown of the Effectiveness of Mental Health Treatment Programs on Bullying Rates
 ```{r}
-orderedLogRegModel <- polr(as.factor(bullyingRate) ~ treatAva, data = schooldata, Hess = T)
+orderedLogRegModel <- polr(as.factor(bullyingRate) ~ treatAva, data = SchoolData, Hess = T)
 
 coefTable <- coef(summary(orderedLogRegModel))
-#technically only true at infinite df, but decent approximation at 2100 observations
+# technically only true at infinite df, but decent approximation at 2100 observations
 pVal <- pnorm(abs(coefTable[, "t value"]), lower.tail = FALSE) * 2
 
 
 coefTable <- cbind(coefTable, "p value" = pVal)
 ci <- confint(orderedLogRegModel)
 
-#printing out confidence intervals and the coefficient table
+# printing out confidence intervals and the coefficient table
 ci
 coefTable
 ```
